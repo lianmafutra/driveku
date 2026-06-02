@@ -1767,21 +1767,33 @@ body {
 
   .action-bar {
     margin-bottom: 16px;
-    gap: 12px;
+    gap: 10px;
+    align-items: stretch;
   }
 
   .toolbar-controls {
     width: 100%;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 2px;
+    overflow: visible;
+  }
+
+  .toolbar-controls > * {
+    min-width: 0;
+  }
+
+  .toolbar-controls .control-group,
+  .toolbar-controls select,
+  .toolbar-controls button {
+    width: 100%;
   }
 
   .actions {
     width: 100%;
     justify-content: space-between;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   .actions span {
@@ -1789,8 +1801,9 @@ body {
   }
 
   .actions button {
+    flex: 1 1 0;
     padding: 10px 12px;
-    min-width: 42px;
+    min-width: 0;
   }
 
   .files-grid,
