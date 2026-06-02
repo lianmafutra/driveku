@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bagikan - Akses File Cepat & Aman</title>
+  <!-- Google Fonts & Icon -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==================== LOGIN VIEW ==================== -->
+  <div id="login-view" class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <i class="fa-solid fa-square-share-nodes fa-bounce"></i>
+        <h1>Bagikan</h1>
+        <p>Akses File Cepat & Premium</p>
+      </div>
+      <form id="login-form">
+        <div class="input-group">
+          <label for="login-password">Password Akses</label>
+          <div class="password-wrapper">
+            <input type="password" id="login-password" placeholder="Masukkan password..." required autocomplete="current-password">
+            <button type="button" id="toggle-login-pass" class="btn-icon">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+          Masuk <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        </button>
+      </form>
+      <div class="auth-footer">
+        <p><i class="fa-solid fa-lock"></i> Keamanan terenkripsi penuh</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD VIEW ==================== -->
+  <div id="app-view" class="app-container hidden">
+    <!-- Navbar / Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="brand">
+          <i class="fa-solid fa-square-share-nodes"></i>
+          <span>Bagikan</span>
+        </div>
+      </div>
+      <div class="header-center">
+        <div class="search-bar">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="search-input" placeholder="Cari file & folder...">
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="btn-change-pass" class="btn-icon-round" title="Ganti Password">
+          <i class="fa-solid fa-key"></i>
+        </button>
+        <button id="btn-logout" class="btn-icon-round logout" title="Keluar">
+          <i class="fa-solid fa-power-off"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="app-body">
+      <!-- Breadcrumb Bar & Action Bar -->
+      <section class="action-bar">
+        <div class="breadcrumb-container">
+          <nav id="breadcrumbs" class="breadcrumbs">
+            <!-- Breadcrumbs loaded dynamically -->
+          </nav>
+        </div>
+        <div class="toolbar-controls">
+          <!-- File Category Filters -->
+          <div class="control-group category-filters">
+            <button class="btn-filter active" data-category="all">Semua</button>
+            <button class="btn-filter" data-category="shared"><i class="fa-solid fa-share-nodes"></i> Bersama</button>
+            <button class="btn-filter" data-category="document"><i class="fa-solid fa-file-invoice"></i> Dokumen</button>
+            <button class="btn-filter" data-category="image"><i class="fa-solid fa-image"></i> Gambar</button>
+            <button class="btn-filter" data-category="video"><i class="fa-solid fa-video"></i> Video</button>
+          </div>
+
+          <!-- Sort controls -->
+          <div class="control-group">
+            <select id="sort-select" class="form-control-sm" title="Urutkan berdasarkan">
+              <option value="name">Nama</option>
+              <option value="createdAt" selected>Tanggal Dibuat</option>
+              <option value="size">Ukuran</option>
+            </select>
+            <button id="btn-sort-order" class="btn-icon-sm" title="Ubah Arah Urutan">
+              <i class="fa-solid fa-sort-down"></i>
+            </button>
+          </div>
+
+          <div class="control-group">
+            <select id="grid-columns-select" class="form-control-sm" title="Jumlah kolom grid">
+              <option value="7">7 Kolom</option>
+              <option value="8">8 Kolom</option>
+              <option value="9">9 Kolom</option>
+              <option value="10">10 Kolom</option>
+            </select>
+          </div>
+
+          <!-- Grid/List toggle -->
+          <button id="btn-layout-toggle" class="btn-icon-sm" title="Ubah Tampilan Grid/List">
+            <i class="fa-solid fa-list"></i>
+          </button>
+          
+          <div class="actions">
+            <button id="btn-new-folder" class="btn btn-secondary">
+              <i class="fa-solid fa-folder-plus"></i> <span>Folder Baru</span>
+            </button>
+            <button id="btn-new-note" class="btn btn-secondary">
+              <i class="fa-solid fa-file-pen"></i> <span>Catatan Txt</span>
+            </button>
+            <button id="btn-upload" class="btn btn-primary">
+              <i class="fa-solid fa-cloud-arrow-up"></i> <span>Upload</span>
+            </button>
+            <button id="btn-bulk-toggle" class="btn btn-secondary">
+              <i class="fa-regular fa-square-check"></i> <span>Pilih Banyak</span>
+            </button>
+            <button id="btn-bulk-delete" class="btn btn-danger hidden">
+              <i class="fa-solid fa-trash"></i> <span>Hapus Terpilih</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Contents (Grid View) -->
+      <main class="content-view">
+        <div id="files-grid" class="files-grid">
+          <!-- Files and folders will be rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state hidden">
+          <i class="fa-regular fa-folder-open"></i>
+          <h3>Folder Kosong</h3>
+          <p>Belum ada file di folder ini. Mulai upload atau buat catatan baru!</p>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ==================== UPLOAD MODAL ==================== -->
+  <div id="modal-upload" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Upload File</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <!-- Drag & Drop Zone -->
+        <div id="drop-zone" class="drop-zone">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <p>Tarik & Lepaskan file ke sini, atau klik untuk memilih</p>
+          <span class="subtitle">Semua jenis file didukung</span>
+          <input type="file" id="file-input" multiple class="hidden">
+          <input type="file" id="folder-input" webkitdirectory directory multiple class="hidden">
+        </div>
+
+        <div class="upload-mode-actions">
+          <button type="button" id="btn-pick-folder" class="btn btn-secondary btn-upload-ghost">
+            <i class="fa-solid fa-folder-open"></i> Upload Folder
+          </button>
+          <span class="upload-folder-hint">Pilih folder penuh, sistem ambil semua file di dalamnya.</span>
+        </div>
+
+        <div id="folder-upload-mode" class="folder-upload-mode hidden">
+          <div class="folder-upload-mode-title">Mode upload folder</div>
+          <div class="folder-upload-mode-options">
+            <button type="button" class="folder-mode-btn active" data-folder-mode="preserve">
+              Folder ikut terupload
+            </button>
+            <button type="button" class="folder-mode-btn" data-folder-mode="flat">
+              File langsung tanpa folder
+            </button>
+          </div>
+        </div>
+
+        <div id="folder-summary" class="folder-summary hidden">
+          <div class="folder-summary-head">
+            <div>
+              <div class="folder-summary-label">Folder dipilih</div>
+              <div id="folder-summary-name" class="folder-summary-name">-</div>
+            </div>
+            <div class="folder-summary-meta">
+              <span id="folder-summary-count">0 file</span>
+              <span id="folder-summary-size">0 Bytes</span>
+            </div>
+          </div>
+          <div id="folder-summary-list" class="folder-summary-list"></div>
+        </div>
+
+        <!-- Temporary Mode Configuration -->
+        <div class="form-group temp-config">
+          <label for="temp-mode"><i class="fa-regular fa-clock"></i> Simpan sebagai file sementara?</label>
+          <select id="temp-mode" class="form-control">
+            <option value="permanent">Selamanya (Permanen)</option>
+            <option value="3">Hapus setelah 3 Menit</option>
+            <option value="5">Hapus setelah 5 Menit</option>
+            <option value="30">Hapus setelah 30 Menit</option>
+            <option value="60">Hapus setelah 1 Jam</option>
+          </select>
+        </div>
+
+        <!-- Upload Queue & Progress -->
+        <div id="upload-queue" class="upload-queue hidden">
+          <h4>Antrean Upload</h4>
+          <div id="queue-items"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary close-modal-btn">Batal</button>
+        <button type="button" id="btn-start-upload" class="btn btn-primary">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CREATE FOLDER MODAL ==================== -->
+  <div id="modal-folder" class="modal">
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h2>Folder Baru</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <form id="folder-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="folder-name">Nama Folder</label>
+            <input type="text" id="folder-name" class="form-control" placeholder="Nama folder..." required autofocus>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">Batal</button>
+          <button type="submit" class="btn btn-primary">Buat</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== NOTE MODAL ==================== -->
+  <div id="modal-note" class="modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2 id="note-modal-title">Buat Catatan Txt</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <form id="note-form">
+        <div class="modal-body">
+          <div class="note-mode-switcher">
+            <button type="button" id="btn-note-view" class="note-mode-btn active">Preview</button>
+            <button type="button" id="btn-note-edit" class="note-mode-btn">Edit</button>
+          </div>
+          <div class="form-group">
+            <label for="note-name">Nama File Catatan</label>
+            <input type="text" id="note-name" class="form-control" placeholder="nama-catatan (otomatis .txt)" required>
+          </div>
+          <div class="form-group note-editor-wrap">
+            <label for="note-content">Isi Catatan</label>
+            <textarea id="note-content" class="form-control text-editor" placeholder="Tulis catatan Anda di sini..." rows="12"></textarea>
+            <div id="note-preview" class="note-preview hidden"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">Tutup</button>
+          <button type="submit" id="btn-save-note" class="btn btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== SHARE MODAL ==================== -->
+  <div id="modal-share" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Bagikan File / Folder</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <form id="share-form">
+        <input type="hidden" id="share-file-id">
+        <div class="modal-body">
+          <div class="share-item-info">
+            <i class="fa-solid fa-file" id="share-icon"></i>
+            <span id="share-filename">nama_file.zip</span>
+          </div>
+
+          <!-- Configuration Fields -->
+          <div class="form-group">
+            <label for="share-custom-link">Kustom Shortlink (Opsional)</label>
+            <div class="link-input-wrapper share-url-line">
+              <span id="share-base-url">bagikan.co/s/</span>
+              <input type="text" id="share-custom-link" class="form-control" placeholder="kode-link">
+              <button type="button" id="btn-random-share-code" class="btn btn-secondary btn-random-code">
+                <i class="fa-solid fa-shuffle"></i> Random
+              </button>
+            </div>
+            <small class="form-help">Random menghasilkan kode 3-4 digit. Hanya huruf, angka, strip, dan underscore.</small>
+          </div>
+
+          <div id="share-live-preview" class="share-live-preview">
+            <label>URL Link</label>
+            <div class="result-box">
+              <input type="text" id="share-live-url" readonly>
+              <button type="button" id="btn-copy-live-link" class="btn btn-secondary">
+                <i class="fa-regular fa-copy"></i> Salin
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="share-password">Password Keamanan (Opsional)</label>
+            <input type="password" id="share-password" class="form-control" placeholder="Biarkan kosong jika tanpa password">
+          </div>
+
+          <div class="form-group">
+            <label for="share-expiry">Masa Aktif Link (Opsional)</label>
+            <select id="share-expiry" class="form-control">
+              <option value="">Aktif Selamanya</option>
+              <option value="5">5 Menit</option>
+              <option value="30">30 Menit</option>
+              <option value="60">1 Jam</option>
+              <option value="1440">1 Hari</option>
+              <option value="10080">7 Hari</option>
+            </select>
+          </div>
+
+          <!-- Generated Link Area (Shows after submit) -->
+          <div id="share-result-area" class="share-result hidden">
+            <label>Link Berhasil Dibuat!</label>
+            <div class="result-box">
+              <input type="text" id="generated-link-url" readonly>
+              <button type="button" id="btn-copy-link" class="btn btn-secondary">
+                <i class="fa-regular fa-copy"></i> Copy
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-share" class="btn btn-secondary hidden">Matikan Link</button>
+          <button type="button" class="btn btn-secondary close-modal-btn">Tutup</button>
+          <button type="submit" id="btn-generate-share" class="btn btn-primary">Buat Tautan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== RENAME MODAL ==================== -->
+  <div id="modal-rename" class="modal">
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h2>Ubah Nama</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <form id="rename-form">
+        <input type="hidden" id="rename-item-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="rename-input">Nama Baru</label>
+            <input type="text" id="rename-input" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== PASSWORD CHANGE MODAL ==================== -->
+  <div id="modal-change-password" class="modal">
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h2>Ganti Password Akses</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <form id="change-pass-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="old-password">Password Lama</label>
+            <input type="password" id="old-password" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="new-password">Password Baru</label>
+            <input type="password" id="new-password" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">Batal</button>
+          <button type="submit" class="btn btn-primary">Perbarui</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== PREMIUM MULTI-MEDIA PREVIEW MODAL ==================== -->
+  <div id="modal-image-preview" class="modal">
+    <div class="modal-content modal-lg" style="background-color: rgba(11, 15, 25, 0.96); width: 95%; max-width: 900px;">
+      <div class="modal-header" style="border-bottom: none;">
+        <h2 id="preview-image-title" style="word-break: break-all;">Preview File</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body" style="display: flex; justify-content: center; align-items: center; min-height: 50vh; max-height: 80vh; padding: 10px; overflow: hidden;">
+        <!-- Dynamic containers -->
+        <img id="preview-img-element" class="hidden" src="" alt="Preview" style="max-width: 100%; max-height: 70vh; border-radius: var(--radius-md); object-fit: contain; box-shadow: var(--shadow-premium);">
+        
+        <video id="preview-video-element" class="hidden" controls style="max-width: 100%; max-height: 70vh; border-radius: var(--radius-md); box-shadow: var(--shadow-premium); outline: none;"></video>
+        
+        <iframe id="preview-iframe-element" class="hidden" src="" style="width: 100%; height: 70vh; border: none; border-radius: var(--radius-md); background: white;"></iframe>
+      </div>
+      <div class="modal-footer" style="border-top: none; justify-content: space-between; align-items: center;">
+        <span id="preview-image-size" class="subtitle" style="color: var(--text-muted); font-size: 13px;">Size</span>
+        <div>
+          <button type="button" class="btn btn-secondary close-modal-btn">Tutup</button>
+          <button type="button" id="btn-download-preview-img" class="btn btn-primary">
+            Download <i class="fa-solid fa-download"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- File/Folder Context Menu / Popover Actions (For Mobile Friendly Interaction) -->
+  <div id="item-options-sheet" class="bottom-sheet hidden">
+    <div class="sheet-overlay"></div>
+    <div class="sheet-content">
+      <div class="sheet-header">
+        <div class="sheet-title">
+          <i class="fa-solid fa-file" id="sheet-icon"></i>
+          <span id="sheet-name">nama_file.zip</span>
+        </div>
+        <button class="btn-icon" id="btn-close-sheet">&times;</button>
+      </div>
+      <div class="sheet-body">
+        <button id="sheet-opt-pin" class="sheet-item">
+          <i class="fa-solid fa-thumbtack"></i> Pin / Unpin Folder
+        </button>
+        <button id="sheet-opt-download" class="sheet-item">
+          <i class="fa-solid fa-download"></i> Unduh File
+        </button>
+        <button id="sheet-opt-share" class="sheet-item">
+          <i class="fa-solid fa-share-nodes"></i> Bagikan Link
+        </button>
+        <button id="sheet-opt-edit" class="sheet-item">
+          <i class="fa-solid fa-pen-to-square"></i> Ubah Nama
+        </button>
+        <button id="sheet-opt-delete" class="sheet-item danger">
+          <i class="fa-solid fa-trash"></i> Hapus Permanen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

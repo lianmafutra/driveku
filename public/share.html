@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unduh Tautan Bersama - Bagikan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Public view modifications */
+    .public-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 45%),
+                  radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.05), transparent 45%);
+    }
+    .share-card {
+      background-color: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-premium);
+      text-align: center;
+    }
+    .share-item-type {
+      font-size: 56px;
+      color: var(--accent-primary);
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px var(--accent-glow);
+    }
+    .share-item-type.folder {
+      color: #f59e0b;
+    }
+    .share-card h1 {
+      font-size: 22px;
+      font-weight: 600;
+      word-break: break-all;
+      margin-bottom: 8px;
+    }
+    .share-meta {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .share-error {
+      color: var(--danger);
+    }
+    .share-error i {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .share-subfolder-list {
+      text-align: left;
+      margin-top: 20px;
+      background-color: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .public-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      transition: var(--transition-smooth);
+    }
+    .public-list-item:hover {
+      background-color: var(--bg-tertiary);
+    }
+    .public-list-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .public-list-item-left i {
+      flex-shrink: 0;
+    }
+    .public-list-item-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .public-list-item-right {
+      color: var(--text-muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="public-container">
+    <!-- Main Card -->
+    <div class="share-card" id="share-card">
+      <div id="loading-state">
+        <i class="fa-solid fa-spinner fa-spin-pulse share-item-type"></i>
+        <h1>Memuat Tautan...</h1>
+        <p class="share-meta">Silakan tunggu sebentar...</p>
+      </div>
+
+      <!-- Password Verification UI -->
+      <div id="password-state" class="hidden">
+        <i class="fa-solid fa-circle-nodes share-item-type"></i>
+        <h1>Tautan Dilindungi Password</h1>
+        <p class="share-meta">Masukkan password untuk mendownload file ini</p>
+        <form id="public-password-form" style="margin-top: 20px;">
+          <div class="form-group">
+            <div class="password-wrapper public-password-wrapper">
+              <input type="password" id="public-password-input" class="form-control" placeholder="Masukkan password keamanan..." required autofocus>
+              <button type="button" id="toggle-public-pass" class="btn-icon public-pass-toggle">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Akses Tautan</button>
+        </form>
+      </div>
+
+      <!-- File Access / Download UI -->
+      <div id="download-state" class="hidden">
+        <i class="fa-solid fa-file-arrow-down share-item-type" id="item-icon"></i>
+        <h1 id="item-name">nama_file.zip</h1>
+        <div class="share-meta">
+          <span id="item-size">12.5 MB</span>
+          <span class="separator">•</span>
+          <span id="item-expiry">Aktif</span>
+        </div>
+
+        <!-- If it's a folder: render interactive list inside folder -->
+        <div id="folder-view-area" class="hidden">
+          <p style="text-align: left; font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+            <i class="fa-solid fa-folder-open"></i> Isi Folder: <span id="current-folder-title"></span>
+          </p>
+          <div id="public-folder-items" class="share-subfolder-list"></div>
+        </div>
+
+        <button id="btn-public-download" class="btn btn-primary btn-block" style="margin-top: 20px;">
+          Unduh File <i class="fa-solid fa-download"></i>
+        </button>
+      </div>
+
+      <!-- Error / Expired UI -->
+      <div id="error-state" class="hidden share-error">
+        <i class="fa-solid fa-face-frown"></i>
+        <h1 id="error-title">Tautan Tidak Valid</h1>
+        <p id="error-desc" style="color: var(--text-muted); font-size: 14px; margin-top: 10px;">Link share mungkin sudah kedaluwarsa atau dihapus oleh pemilik.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+    // Extract shortlink from path
+    const pathParts = window.location.pathname.split('/');
+    const shortlink = pathParts[pathParts.length - 1];
+
+    let metadata = null;
+    let verifiedPassword = '';
+    let currentSubFolderId = null;
+
+    // DOM selectors
+    const loadingState = document.getElementById('loading-state');
+    const passwordState = document.getElementById('password-state');
+    const downloadState = document.getElementById('download-state');
+    const errorState = document.getElementById('error-state');
+    
+    const errorTitle = document.getElementById('error-title');
+    const errorDesc = document.getElementById('error-desc');
+
+    const passForm = document.getElementById('public-password-form');
+    const passInput = document.getElementById('public-password-input');
+
+    const itemName = document.getElementById('item-name');
+    const itemSize = document.getElementById('item-size');
+    const itemExpiry = document.getElementById('item-expiry');
+    const itemIcon = document.getElementById('item-icon');
+    const btnDownload = document.getElementById('btn-public-download');
+
+    const folderViewArea = document.getElementById('folder-view-area');
+    const publicFolderItems = document.getElementById('public-folder-items');
+    const currentFolderTitle = document.getElementById('current-folder-title');
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      const icon = type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation';
+      toast.innerHTML = `<i class="${icon}"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.animation = 'toastIn 0.3s reverse forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    async function fetchMetadata() {
+      try {
+        const res = await fetch(`/api/public/share/${shortlink}`);
+        const data = await res.json();
+        
+        if (!res.ok) {
+          showError(res.status === 410 ? 'Link Kedaluwarsa' : 'Link Tidak Ditemukan', data.error || 'Link tidak valid.');
+          return;
+        }
+
+        metadata = data;
+        
+        if (metadata.hasPassword) {
+          showState('password');
+        } else {
+          showDownloadArea();
+        }
+      } catch (err) {
+        showError('Kesalahan Server', 'Gagal terhubung ke server.');
+      }
+    }
+
+    function showState(state) {
+      loadingState.classList.add('hidden');
+      passwordState.classList.add('hidden');
+      downloadState.classList.add('hidden');
+      errorState.classList.add('hidden');
+
+      if (state === 'password') passwordState.classList.remove('hidden');
+      else if (state === 'download') downloadState.classList.remove('hidden');
+      else if (state === 'error') errorState.classList.remove('hidden');
+    }
+
+    function showError(title, message) {
+      errorTitle.textContent = title;
+      errorDesc.textContent = message;
+      showState('error');
+    }
+
+    function getFileIconClass(isFolder, mimeType) {
+      if (isFolder) return 'fa-solid fa-folder-closed file-icon folder';
+      const type = mimeType || '';
+      if (type.startsWith('image/')) return 'fa-solid fa-file-image file-icon image';
+      if (type === 'text/plain') return 'fa-solid fa-file-lines file-icon text';
+      if (type.includes('pdf')) return 'fa-solid fa-file-pdf file-icon pdf';
+      if (type.includes('zip') || type.includes('rar')) return 'fa-solid fa-file-zipper file-icon zip';
+      return 'fa-solid fa-file file-icon';
+    }
+
+    function formatBytes(bytes, decimals = 2) {
+      if (!bytes) return '0 Bytes';
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function showDownloadArea() {
+      showState('download');
+      itemName.textContent = metadata.name;
+      itemSize.textContent = metadata.isFolder ? 'Folder Bersama' : formatBytes(metadata.size);
+      
+      // Icon
+      itemIcon.className = getFileIconClass(metadata.isFolder, metadata.type);
+
+      // Expiry message
+      if (metadata.expiryTime) {
+        const remainingMin = Math.round((new Date(metadata.expiryTime) - new Date()) / 60000);
+        itemExpiry.textContent = remainingMin > 0 ? `Aktif sisa ${remainingMin} menit` : 'Kedaluwarsa';
+      } else {
+        itemExpiry.textContent = 'Aktif Selamanya';
+      }
+
+      // If it is a folder, download button works as index. Folder listing requires rendering items.
+      if (metadata.isFolder) {
+        btnDownload.classList.add('hidden'); // Hide base zip download, show folder items download
+        folderViewArea.classList.remove('hidden');
+        loadSharedFolderContents();
+      } else {
+        btnDownload.classList.remove('hidden');
+        folderViewArea.classList.add('hidden');
+      }
+    }
+
+    async function loadSharedFolderContents(subFolderId = null) {
+      try {
+        const res = await fetch(`/api/public/share/${shortlink}/folder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: verifiedPassword, subFolderId })
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          currentFolderTitle.textContent = data.folderName;
+          renderPublicFolderItems(data.files, data.parentFolderId);
+        } else {
+          showToast(data.error || 'Gagal memuat isi folder', 'error');
+        }
+      } catch (err) {
+        showToast('Koneksi bermasalah', 'error');
+      }
+    }
+
+    function renderPublicFolderItems(files, parentFolderId) {
+      publicFolderItems.innerHTML = '';
+
+      // Add back navigate folder if we are in subfolder
+      if (parentFolderId) {
+        const backEl = document.createElement('div');
+        backEl.className = 'public-list-item';
+        backEl.innerHTML = `
+          <div class="public-list-item-left">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span class="public-list-item-name">Kembali</span>
+          </div>
+        `;
+        backEl.addEventListener('click', () => {
+          loadSharedFolderContents(parentFolderId);
+        });
+        publicFolderItems.appendChild(backEl);
+      }
+
+      if (files.length === 0) {
+        const empty = document.createElement('p');
+        empty.style.cssText = 'text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px 0;';
+        empty.textContent = 'Folder kosong';
+        publicFolderItems.appendChild(empty);
+        return;
+      }
+
+      files.forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'public-list-item';
+        
+        const sizeInfo = f.isFolder ? 'Folder' : formatBytes(f.size);
+        row.innerHTML = `
+          <div class="public-list-item-left">
+            <i class="${getFileIconClass(f.isFolder, f.type)}"></i>
+            <span class="public-list-item-name">${f.name}</span>
+          </div>
+          <div class="public-list-item-right">${sizeInfo}</div>
+        `;
+
+        row.addEventListener('click', () => {
+          if (f.isFolder) {
+            loadSharedFolderContents(f.id);
+          } else {
+            downloadPublicFile(f.id);
+          }
+        });
+
+        publicFolderItems.appendChild(row);
+      });
+    }
+
+    passForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = passInput.value;
+      
+      try {
+        if (metadata && metadata.isFolder) {
+          // If folder, verify using folder route
+          const res = await fetch(`/api/public/share/${shortlink}/folder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password, subFolderId: null })
+          });
+          
+          if (res.ok) {
+            verifiedPassword = password;
+            showToast('Password terverifikasi!', 'success');
+            showDownloadArea();
+          } else {
+            showToast('Password salah!', 'error');
+          }
+        } else {
+          // If file, verify password by probing file download status via JSON (or custom server probe)
+          // We can call the download endpoint using fetch to verify password, if it returns 401 it's wrong.
+          const res = await fetch(`/api/public/share/${shortlink}/download`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+
+          if (res.status === 401) {
+            showToast('Password salah!', 'error');
+          } else {
+            verifiedPassword = password;
+            showToast('Password terverifikasi!', 'success');
+            showDownloadArea();
+          }
+        }
+      } catch (err) {
+        showToast('Password salah atau koneksi bermasalah', 'error');
+      }
+    });
+
+    btnDownload.addEventListener('click', () => {
+      downloadPublicFile();
+    });
+
+    function downloadPublicFile(fileId = null) {
+      // Create a dynamic form to post password securely if required
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/api/public/share/${shortlink}/download`;
+      
+      if (fileId) {
+        const itemInput = document.createElement('input');
+        itemInput.type = 'hidden';
+        itemInput.name = 'subFileId';
+        itemInput.value = fileId;
+        form.appendChild(itemInput);
+      }
+
+      if (verifiedPassword) {
+        const passHidden = document.createElement('input');
+        passHidden.type = 'hidden';
+        passHidden.name = 'password';
+        passHidden.value = verifiedPassword;
+        form.appendChild(passHidden);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    }
+
+    fetchMetadata();
+  </script>
+</body>
+</html>
