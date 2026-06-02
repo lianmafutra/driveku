@@ -1756,129 +1756,168 @@ body {
   .app-header {
     padding: 0 16px;
   }
+
   .search-bar {
-    display: none; /* Hide standard search in mobile header, can integrate inline or expand */
+    display: none;
   }
+
   .app-body {
-    padding: 16px;
+    padding: 14px;
   }
+
   .action-bar {
     margin-bottom: 16px;
+    gap: 12px;
   }
+
   .toolbar-controls {
     width: 100%;
     justify-content: space-between;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
+
+  .actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
   .actions span {
-    display: none; /* Show icons only on mobile buttons */
+    display: none;
   }
+
   .actions button {
-    padding: 10px 14px;
+    padding: 10px 12px;
+    min-width: 42px;
   }
-  .files-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+
+  .files-grid,
+  .files-grid.grid-cols-7,
+  .files-grid.grid-cols-8,
+  .files-grid.grid-cols-9,
+  .files-grid.grid-cols-10,
+  .files-grid.grid-cols-11,
+  .files-grid.grid-cols-12,
+  .files-grid.grid-cols-13,
+  .files-grid.grid-cols-14,
+  .files-grid.grid-cols-15 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
+
   .file-card {
-    padding: 12px;
+    min-width: 0;
+    padding: 10px;
+    border-radius: 16px;
   }
-  .file-icon {
-    font-size: 28px;
+
+  .thumbnail-container {
+    min-height: 92px;
+    height: 28vw;
+    max-height: 130px;
+    margin-bottom: 10px;
   }
+
+  .file-card-header {
+    min-height: 26px;
+  }
+
+  .file-menu-btn {
+    width: 30px;
+    height: 30px;
+  }
+
   .file-name {
-    font-size: 13px;
+    font-size: 12px;
+    line-height: 1.35;
+    min-width: 0;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
+
   .file-info-row {
-    font-size: 11px;
+    font-size: 10px;
+    gap: 6px;
+    flex-wrap: wrap;
   }
+
+  .file-card-footer-row {
+    gap: 8px;
+  }
+
   .modal-content {
     width: 95%;
   }
 
-  /* List view mobile adjustments */
+  .files-grid.list-view,
+  .files-grid.list-view.grid-cols-7,
+  .files-grid.list-view.grid-cols-8,
+  .files-grid.list-view.grid-cols-9,
+  .files-grid.list-view.grid-cols-10,
+  .files-grid.list-view.grid-cols-11,
+  .files-grid.list-view.grid-cols-12,
+  .files-grid.list-view.grid-cols-13,
+  .files-grid.list-view.grid-cols-14,
+  .files-grid.list-view.grid-cols-15 {
+    grid-template-columns: 1fr;
+  }
+
   .files-grid.list-view .file-card {
     align-items: flex-start;
   }
+
   .files-grid.list-view .file-card-body {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
   }
+
   .files-grid.list-view .file-card-footer-row {
     width: 100%;
     min-width: 0;
     align-items: flex-start;
   }
+
   .files-grid.list-view .file-info-row {
     width: 100%;
     justify-content: space-between;
     gap: 12px;
   }
+
   .files-grid.list-view .file-name {
     padding-right: 0;
   }
+
   .files-grid.list-view .file-menu-btn {
     top: -6px;
     right: -6px;
   }
 }
 
-/* ==================== RESPONSIVE WORK ==================== */
-@media (max-width: 768px) {
-  .app-header {
-    padding: 0 16px;
-  }
-  .search-bar {
-    display: none; /* Hide standard search in mobile header, can integrate inline or expand */
-  }
-  .app-body {
-    padding: 16px;
-  }
-  .action-bar {
-    margin-bottom: 16px;
-  }
-  .toolbar-controls {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .actions span {
-    display: none; /* Show icons only on mobile buttons */
-  }
-  .actions button {
-    padding: 10px 14px;
-  }
-  .files-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-  }
-  .file-card {
-    padding: 12px;
-  }
-  .file-icon {
-    font-size: 28px;
-  }
-  .file-name {
-    font-size: 13px;
-  }
-  .file-info-row {
-    font-size: 11px;
-  }
-  .modal-content {
-    width: 95%;
+@media (max-width: 380px) {
+  .files-grid,
+  .files-grid.grid-cols-7,
+  .files-grid.grid-cols-8,
+  .files-grid.grid-cols-9,
+  .files-grid.grid-cols-10,
+  .files-grid.grid-cols-11,
+  .files-grid.grid-cols-12,
+  .files-grid.grid-cols-13,
+  .files-grid.grid-cols-14,
+  .files-grid.grid-cols-15 {
+    gap: 10px;
   }
 
-  /* List view mobile adjustments */
-  .files-grid.list-view .file-card-body {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  .file-card {
+    padding: 9px;
   }
-  .files-grid.list-view .file-info-row {
-    width: 100%;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .files-grid.list-view .file-name {
-    padding-right: 0;
+
+  .thumbnail-container {
+    min-height: 82px;
   }
 }
