@@ -1773,27 +1773,45 @@ body {
 
   .toolbar-controls {
     width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     overflow: visible;
   }
 
-  .toolbar-controls > * {
-    min-width: 0;
+  .toolbar-controls .control-group {
+    width: 100%;
   }
 
-  .toolbar-controls .control-group,
-  .toolbar-controls select,
-  .toolbar-controls button {
+  .category-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .category-filters .btn-filter {
     width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .control-group {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .control-group select,
+  .control-group .btn-icon-sm {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .actions {
     width: 100%;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    flex-wrap: wrap;
   }
 
   .actions span {
@@ -1801,9 +1819,9 @@ body {
   }
 
   .actions button {
-    flex: 1 1 0;
-    padding: 10px 12px;
+    width: 100%;
     min-width: 0;
+    padding: 10px 10px;
   }
 
   .files-grid,
