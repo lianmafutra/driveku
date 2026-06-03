@@ -125,6 +125,9 @@
             <button id="btn-bulk-toggle" class="btn btn-secondary">
               <i class="fa-regular fa-square-check"></i> <span>Pilih Banyak</span>
             </button>
+            <button id="btn-bulk-move" class="btn btn-secondary hidden">
+              <i class="fa-solid fa-folder-tree"></i> <span>Pindah Terpilih</span>
+            </button>
             <button id="btn-bulk-delete" class="btn btn-danger hidden">
               <i class="fa-solid fa-trash"></i> <span>Hapus Terpilih</span>
             </button>
@@ -351,6 +354,34 @@
     </div>
   </div>
 
+  <div id="modal-bulk-move" class="modal">
+    <div class="modal-content modal-md">
+      <div class="modal-header">
+        <h2>Pindah Terpilih</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <form id="bulk-move-form">
+        <div class="modal-body">
+          <p class="bulk-move-count" id="bulk-move-count">0 item terpilih</p>
+          <div class="bulk-move-layout">
+            <div class="bulk-move-tree-panel">
+              <div class="bulk-move-tree-head">
+                <label>Pilih Folder Tujuan</label>
+                <div class="bulk-move-target-preview">Target: <span id="bulk-move-selected-target">Beranda</span></div>
+                <button type="button" id="btn-bulk-move-root" class="btn btn-secondary btn-root-target">Beranda</button>
+              </div>
+              <div id="bulk-move-tree" class="bulk-move-tree" aria-label="Tree folder tujuan"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">Batal</button>
+          <button type="submit" class="btn btn-primary">Pindahkan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ==================== RENAME MODAL ==================== -->
   <div id="modal-rename" class="modal">
     <div class="modal-content modal-sm">
@@ -440,6 +471,11 @@
           <span id="sheet-name">nama_file.zip</span>
         </div>
         <button class="btn-icon" id="btn-close-sheet">&times;</button>
+      </div>
+      <div class="sheet-info-panel" id="sheet-info-panel">
+        <div class="sheet-info-row"><span class="sheet-info-label">Tipe:</span> <span id="sheet-info-type">Folder</span></div>
+        <div class="sheet-info-row" id="sheet-info-size-row"><span class="sheet-info-label">Ukuran:</span> <span id="sheet-info-size">-</span></div>
+        <div class="sheet-info-row"><span class="sheet-info-label">Lokasi:</span> <span id="sheet-info-path">/Beranda</span></div>
       </div>
       <div class="sheet-body">
         <button id="sheet-opt-pin" class="sheet-item">

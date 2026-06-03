@@ -174,11 +174,14 @@ app.post('/api/auth/change-password', requireAuth, (req, res) => {
 app.get('/api/files', requireAuth, (req, res) => {
   const parentId = req.query.parentId || null;
   const search = req.query.search || '';
+  const allFolders = req.query.allFolders === '1';
 
   const db = readDb();
   let files = db.files.filter(f => !f.isDeleted);
 
-  if (search) {
+  if (allFolders) {
+    files = files.filter(f => f.isFolder);
+  } else if (search) {
     files = files.filter(f => f.name.toLowerCase().includes(search.toLowerCase()));
   } else {
     files = files.filter(f => f.parentId === parentId);
@@ -386,6 +389,89 @@ app.delete('/api/files/:id', requireAuth, (req, res) => {
   deleteItem(db, item.id);
   writeDb(db);
   res.json({ success: true, message: 'Berhasil dihapus!' });
+});
+
+app.post('/api/files/bulk-delete', requireAuth, (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+  if (ids.length === 0) {
+    return res.status(400).json({ error: 'Tidak ada item terpilih.' });
+  }
+
+  const db = readDb();
+  const deletedIds = [];
+  const failedIds = [];
+
+  ids.forEach(id => {
+    const item = db.files.find(f => f.id === id && !f.isDeleted);
+    if (!item) {
+      failedIds.push(id);
+      return;
+    }
+    deleteItem(db, item.id);
+    deletedIds.push(id);
+  });
+
+  writeDb(db);
+  res.json({ success: true, deletedIds, failedIds });
+});
+
+const isDescendantFolder = (db, folderId, maybeDescendantId) => {
+  let current = db.files.find(f => f.id === maybeDescendantId && !f.isDeleted);
+  let limit = 100;
+
+  while (current && current.parentId && limit > 0) {
+    if (current.parentId === folderId) return true;
+    current = db.files.find(f => f.id === current.parentId && !f.isDeleted);
+    limit -= 1;
+  }
+
+  return false;
+};
+
+app.post('/api/files/bulk-move', requireAuth, (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+  const targetParentId = req.body.targetParentId === '' || req.body.targetParentId === null || req.body.targetParentId === undefined || req.body.targetParentId === 'null'
+    ? null
+    : req.body.targetParentId;
+
+  if (ids.length === 0) {
+    return res.status(400).json({ error: 'Tidak ada item terpilih.' });
+  }
+
+  const db = readDb();
+  if (targetParentId) {
+    const targetFolder = db.files.find(f => f.id === targetParentId && !f.isDeleted && f.isFolder);
+    if (!targetFolder) {
+      return res.status(404).json({ error: 'Folder tujuan tidak ditemukan.' });
+    }
+  }
+
+  const movedIds = [];
+  const failedIds = [];
+
+  ids.forEach(id => {
+    const item = db.files.find(f => f.id === id && !f.isDeleted);
+    if (!item) {
+      failedIds.push(id);
+      return;
+    }
+
+    if (item.id === targetParentId) {
+      failedIds.push(id);
+      return;
+    }
+
+    if (item.isFolder && targetParentId && isDescendantFolder(db, item.id, targetParentId)) {
+      failedIds.push(id);
+      return;
+    }
+
+    item.parentId = targetParentId;
+    movedIds.push(id);
+  });
+
+  writeDb(db);
+  res.json({ success: true, movedIds, failedIds });
 });
 
 // API: Download File (Authenticated)

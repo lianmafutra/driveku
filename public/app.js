@@ -11,6 +11,8 @@ let currentSortAsc = false;
 let currentGridColumns = 7;
 let multiSelectMode = false;
 let selectedFileIds = new Set();
+let draggedItemIds = [];
+let draggedItemId = null;
 
 // API Base URLs
 const API_AUTH = '/api/auth';
@@ -88,6 +90,14 @@ const shareResultArea = document.getElementById('share-result-area');
 const generatedLinkUrl = document.getElementById('generated-link-url');
 const btnCopyLink = document.getElementById('btn-copy-link');
 const btnCancelShare = document.getElementById('btn-cancel-share');
+const modalBulkMove = document.getElementById('modal-bulk-move');
+const bulkMoveForm = document.getElementById('bulk-move-form');
+const bulkMoveTree = document.getElementById('bulk-move-tree');
+const bulkMoveCount = document.getElementById('bulk-move-count');
+const bulkMoveSelectedTarget = document.getElementById('bulk-move-selected-target');
+const btnBulkMoveRoot = document.getElementById('btn-bulk-move-root');
+const btnBulkMove = document.getElementById('btn-bulk-move');
+
 
 const renameForm = document.getElementById('rename-form');
 const renameInput = document.getElementById('rename-input');
@@ -407,6 +417,7 @@ function renderFiles(files) {
     const card = document.createElement('div');
     card.className = `file-card ${item.pinned ? 'pinned-item' : ''}`;
     card.dataset.id = item.id;
+    card.draggable = true;
     card.classList.toggle('selectable', multiSelectMode);
     card.classList.toggle('selected', selectedFileIds.has(item.id));
     
@@ -524,6 +535,64 @@ function renderFiles(files) {
       </div>
     `;
 
+    card.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.file-menu-btn')) return;
+      card.classList.add('drag-hold');
+    });
+
+    card.addEventListener('pointerup', () => card.classList.remove('drag-hold'));
+    card.addEventListener('pointercancel', () => card.classList.remove('drag-hold'));
+    card.addEventListener('mouseleave', () => card.classList.remove('drag-hold'));
+
+    card.addEventListener('dragstart', (e) => {
+      if (multiSelectMode) {
+        if (selectedFileIds.has(item.id)) {
+          draggedItemIds = [...selectedFileIds];
+        } else {
+          draggedItemIds = [item.id];
+        }
+      } else {
+        draggedItemIds = [item.id];
+      }
+      draggedItemId = item.id;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', JSON.stringify({ ids: draggedItemIds }));
+      card.classList.remove('drag-hold');
+      card.classList.add('dragging');
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      draggedItemIds = [];
+      draggedItemId = null;
+      document.querySelectorAll('.file-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+    });
+
+    if (item.isFolder) {
+      card.addEventListener('dragover', (e) => {
+        if (!draggedItemIds.length) return;
+        if (draggedItemIds.includes(item.id)) return;
+        e.preventDefault();
+        card.classList.add('drop-target');
+      });
+
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('drop-target');
+      });
+
+      card.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        card.classList.remove('drop-target');
+        const payload = (() => {
+          try { return JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return null; }
+        })();
+        const ids = Array.isArray(payload?.ids) && payload.ids.length ? payload.ids : (draggedItemIds.length ? draggedItemIds : [draggedItemId]);
+        const filteredIds = [...new Set(ids)].filter(Boolean).filter(id => id !== item.id);
+        if (filteredIds.length === 0) return;
+        await moveSelectedItems(filteredIds, item.id);
+      });
+    }
+
     card.addEventListener('click', (e) => {
       if (e.target.closest('.file-menu-btn')) return;
       if (multiSelectMode) {
@@ -549,6 +618,7 @@ function renderFiles(files) {
 
     filesGrid.appendChild(card);
   });
+  updateBulkActionState();
 }
 
 // Category filter bind listeners
@@ -616,35 +686,15 @@ btnBulkToggle.addEventListener('click', () => {
 
 btnBulkDelete.addEventListener('click', async () => {
   if (selectedFileIds.size === 0) return;
-
   const confirmDelete = confirm(`Hapus ${selectedFileIds.size} item terpilih?`);
   if (!confirmDelete) return;
 
-  btnBulkDelete.disabled = true;
-  btnBulkDelete.textContent = 'Menghapus...';
+  await bulkDeleteSelected();
+});
 
-  try {
-    const ids = [...selectedFileIds];
-    let deletedCount = 0;
-
-    for (const id of ids) {
-      const res = await fetch(`${API_FILES}/${id}`, { method: 'DELETE' });
-      if (res.ok) deletedCount += 1;
-    }
-
-    selectedFileIds.clear();
-    multiSelectMode = false;
-    updateBulkActionState();
-    filterAndRender();
-    loadFiles();
-    showToast(`Berhasil hapus ${deletedCount} item`, 'success');
-  } catch (err) {
-    console.error('[bulkDelete] failed', err);
-    showToast('Gagal hapus terpilih', 'error');
-  } finally {
-    btnBulkDelete.disabled = false;
-    btnBulkDelete.textContent = 'Hapus Terpilih';
-  }
+btnBulkMove.addEventListener('click', () => {
+  if (selectedFileIds.size === 0) return;
+  openBulkMoveModal();
 });
 
 function updateBulkActionState() {
@@ -655,11 +705,225 @@ function updateBulkActionState() {
 
   const selectedCount = selectedFileIds.size;
   btnBulkDelete.classList.toggle('hidden', !multiSelectMode);
+  btnBulkMove.classList.toggle('hidden', !multiSelectMode);
   btnBulkDelete.disabled = selectedCount === 0;
+  btnBulkMove.disabled = selectedCount === 0;
   btnBulkDelete.innerHTML = selectedCount > 0
     ? `<i class="fa-solid fa-trash"></i> <span>Hapus Terpilih (${selectedCount})</span>`
     : '<i class="fa-solid fa-trash"></i> <span>Hapus Terpilih</span>';
+  btnBulkMove.innerHTML = selectedCount > 0
+    ? `<i class="fa-solid fa-folder-tree"></i> <span>Pindah Terpilih (${selectedCount})</span>`
+    : '<i class="fa-solid fa-folder-tree"></i> <span>Pindah Terpilih</span>';
 }
+
+async function bulkDeleteSelected() {
+  btnBulkDelete.disabled = true;
+  btnBulkDelete.textContent = 'Menghapus...';
+  try {
+    const res = await fetch(`${API_FILES}/bulk-delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [...selectedFileIds] })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Gagal hapus terpilih', 'error');
+      return;
+    }
+    selectedFileIds.clear();
+    multiSelectMode = false;
+    updateBulkActionState();
+    filterAndRender();
+    loadFiles();
+    showToast(`Berhasil hapus ${data.deletedIds?.length || 0} item`, 'success');
+  } catch (err) {
+    console.error('[bulkDelete] failed', err);
+    showToast('Gagal hapus terpilih', 'error');
+  } finally {
+    btnBulkDelete.disabled = false;
+    btnBulkDelete.innerHTML = '<i class="fa-solid fa-trash"></i> <span>Hapus Terpilih</span>';
+  }
+}
+
+async function openBulkMoveModal() {
+  bulkMoveForm.reset();
+  bulkMoveCount.textContent = `${selectedFileIds.size} item terpilih`;
+  bulkMoveSelectedTarget.textContent = 'Beranda';
+  bulkMoveTree.innerHTML = '<div class="bulk-move-tree-loading">Memuat tree folder...</div>';
+  openModal(modalBulkMove);
+  await populateBulkMoveTargets();
+}
+
+function normalizeParentId(value) {
+  return value === undefined || value === null || value === '' || value === 'null' ? null : value;
+}
+
+function collectDescendantFolderIds(folders, folderId, result = new Set()) {
+  folders
+    .filter(folder => normalizeParentId(folder.parentId) === folderId)
+    .forEach(folder => {
+      result.add(folder.id);
+      collectDescendantFolderIds(folders, folder.id, result);
+    });
+  return result;
+}
+
+function getFolderTreeRoots(folders, excludeIds = new Set()) {
+  return folders
+    .filter(folder => !excludeIds.has(folder.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function renderBulkMoveTreeNode(folder, folders, depth, excludeIds) {
+  const nodeWrap = document.createElement('div');
+  nodeWrap.className = 'bulk-tree-node';
+  nodeWrap.style.setProperty('--tree-depth', String(depth));
+
+  const childFolders = folders
+    .filter(item => normalizeParentId(item.parentId) === folder.id && !excludeIds.has(item.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const hasChildren = childFolders.length > 0;
+
+  const row = document.createElement('button');
+  row.type = 'button';
+  row.className = 'bulk-tree-row';
+  row.dataset.folderId = folder.id;
+  row.innerHTML = `
+    <span class="bulk-tree-arrow ${hasChildren ? '' : 'invisible'}" title="Tampilkan/sembunyikan subfolder">
+      <i class="fa-solid fa-chevron-right"></i>
+    </span>
+    <span class="bulk-tree-folder"><i class="fa-solid fa-folder"></i></span>
+    <span class="bulk-tree-name">${folder.name}</span>
+  `;
+
+  const childrenWrap = document.createElement('div');
+  childrenWrap.className = 'bulk-tree-children hidden';
+
+  childFolders.forEach(child => {
+    childrenWrap.appendChild(renderBulkMoveTreeNode(child, folders, depth + 1, excludeIds));
+  });
+
+  const setExpanded = (expanded) => {
+    if (!hasChildren) return;
+    childrenWrap.classList.toggle('hidden', !expanded);
+    row.classList.toggle('expanded', expanded);
+    const arrow = row.querySelector('.bulk-tree-arrow i');
+    if (arrow) {
+      arrow.className = expanded ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right';
+    }
+  };
+
+  row.addEventListener('click', () => {
+    selectedBulkMoveTargetId = folder.id;
+    bulkMoveSelectedTarget.textContent = folder.name;
+    document.querySelectorAll('.bulk-tree-row.active').forEach(el => el.classList.remove('active'));
+    row.classList.add('active');
+  });
+
+  const arrowBtn = row.querySelector('.bulk-tree-arrow');
+  arrowBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setExpanded(childrenWrap.classList.contains('hidden'));
+  });
+
+  row.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      row.click();
+    }
+  });
+  row.tabIndex = 0;
+
+  nodeWrap.appendChild(row);
+  nodeWrap.appendChild(childrenWrap);
+  return nodeWrap;
+}
+
+let selectedBulkMoveTargetId = null;
+
+async function populateBulkMoveTargets() {
+  const selectedIds = new Set(selectedFileIds);
+  bulkMoveTree.innerHTML = '';
+
+  try {
+    const res = await fetch(`${API_FILES}?allFolders=1`);
+    const data = await res.json();
+    if (!res.ok || !Array.isArray(data.files)) {
+      bulkMoveTree.innerHTML = '<div class="bulk-move-tree-loading">Gagal memuat daftar folder</div>';
+      showToast(data.error || 'Gagal memuat daftar folder', 'error');
+      return;
+    }
+
+    const folders = data.files.filter(item => item.isFolder && !item.isDeleted);
+    const excludeIds = new Set(selectedIds);
+    folders.forEach(folder => {
+      if (selectedIds.has(folder.id)) {
+        collectDescendantFolderIds(folders, folder.id, excludeIds);
+      }
+    });
+
+    const roots = getFolderTreeRoots(folders.filter(folder => normalizeParentId(folder.parentId) === null), excludeIds);
+    if (roots.length === 0) {
+      bulkMoveTree.innerHTML = '<div class="bulk-move-tree-loading">Tidak ada folder tujuan</div>';
+      return;
+    }
+
+    roots.forEach(folder => {
+      bulkMoveTree.appendChild(renderBulkMoveTreeNode(folder, folders, 0, excludeIds));
+    });
+    console.info('[bulkMoveTargets] loaded folders', folders.map(f => ({ id: f.id, name: f.name, parentId: f.parentId })));
+  } catch (err) {
+    console.error('[bulkMoveTargets] failed to load all folders', err);
+    bulkMoveTree.innerHTML = '<div class="bulk-move-tree-loading">Gagal memuat daftar folder</div>';
+    showToast('Gagal memuat daftar folder', 'error');
+  }
+}
+
+async function moveSelectedItems(ids, targetParentId) {
+  try {
+    const res = await fetch(`${API_FILES}/bulk-move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, targetParentId: targetParentId || null })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Gagal pindah terpilih', 'error');
+      return false;
+    }
+    if (selectedFileIds.size) {
+      selectedFileIds.clear();
+      multiSelectMode = false;
+      updateBulkActionState();
+    }
+    closeAllModals();
+    filterAndRender();
+    loadFiles();
+    showToast(`Berhasil pindah ${data.movedIds?.length || ids.length} item`, 'success');
+    return true;
+  } catch (err) {
+    console.error('[bulkMove] failed', err);
+    showToast('Gagal pindah terpilih', 'error');
+    return false;
+  }
+}
+
+btnBulkMoveRoot.addEventListener('click', () => {
+  selectedBulkMoveTargetId = null;
+  bulkMoveSelectedTarget.textContent = 'Beranda';
+  document.querySelectorAll('.bulk-tree-row.active').forEach(el => el.classList.remove('active'));
+});
+
+bulkMoveForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (selectedFileIds.size === 0) return;
+
+  const confirmMove = confirm(`Pindahkan ${selectedFileIds.size} item terpilih?`);
+  if (!confirmMove) return;
+
+  await moveSelectedItems([...selectedFileIds], selectedBulkMoveTargetId);
+});
 
 function getPreviewUrl(item) {
   return `${API_FILES}/${item.id}/view`;
@@ -773,6 +1037,25 @@ function openOptionsSheet(item) {
   
   sheetName.textContent = item.name;
   sheetIcon.className = getFileIconClass(item);
+
+  // Populate Info Panel
+  const typeEl = document.getElementById('sheet-info-type');
+  const sizeEl = document.getElementById('sheet-info-size');
+  const pathEl = document.getElementById('sheet-info-path');
+  const sizeRow = document.getElementById('sheet-info-size-row');
+  
+  const extMatch = item.name.match(/\.([^.]+)$/);
+  const fileExt = extMatch ? extMatch[1].toUpperCase() + ' File' : 'File';
+  typeEl.textContent = item.isFolder ? 'Folder' : fileExt;
+
+  if (item.isFolder) {
+    sizeRow.classList.add('hidden');
+  } else {
+    sizeRow.classList.remove('hidden');
+    sizeEl.textContent = formatBytes(item.size);
+  }
+
+  pathEl.textContent = currentPath.map(p => p.name).join(' / ');
   
   // Pinned action label
   sheetOptPin.innerHTML = item.pinned ? '<i class="fa-solid fa-thumbtack-slash"></i> Lepas Pin Folder' : '<i class="fa-solid fa-thumbtack"></i> Pin Teratas';
