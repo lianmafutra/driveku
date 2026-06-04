@@ -12,8 +12,13 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  <!-- ==================== LOGIN VIEW ==================== -->
+  <div id="global-drag-overlay" class="global-drag-overlay hidden">
+    <div class="drag-overlay-content">
+      <i class="fa-solid fa-cloud-arrow-up fa-bounce"></i>
+      <h2>Lepaskan untuk Upload</h2>
+      <p>File akan otomatis diunggah ke lokasi saat ini</p>
+    </div>
+  </div>  <!-- ==================== LOGIN VIEW ==================== -->
   <div id="login-view" class="auth-container">
     <div class="auth-card">
       <div class="auth-logo">
@@ -475,6 +480,7 @@
       <div class="sheet-info-panel" id="sheet-info-panel">
         <div class="sheet-info-row"><span class="sheet-info-label">Tipe:</span> <span id="sheet-info-type">Folder</span></div>
         <div class="sheet-info-row" id="sheet-info-size-row"><span class="sheet-info-label">Ukuran:</span> <span id="sheet-info-size">-</span></div>
+        <div class="sheet-info-row"><span class="sheet-info-label">Upload:</span> <span id="sheet-info-upload-time">-</span></div>
         <div class="sheet-info-row"><span class="sheet-info-label">Lokasi:</span> <span id="sheet-info-path">/Beranda</span></div>
       </div>
       <div class="sheet-body">

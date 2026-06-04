@@ -27,6 +27,7 @@ const initDb = () => {
       passwordHash: hashedPassword,
       files: [],
       shares: [],
+      sessions: [],
       settings: {
         gridColumns: 7
       }
@@ -39,9 +40,11 @@ initDb();
 // Database helpers
 const readDb = () => {
   try {
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    if (!Array.isArray(db.sessions)) db.sessions = [];
+    return db;
   } catch (e) {
-    return { passwordHash: '', files: [], shares: [], settings: { gridColumns: 7 } };
+    return { passwordHash: '', files: [], shares: [], sessions: [], settings: { gridColumns: 7 } };
   }
 };
 
@@ -71,7 +74,8 @@ const sessionStore = new Set(); // Simple in-memory session token store
 
 const requireAuth = (req, res, next) => {
   const token = req.cookies[AUTH_COOKIE_NAME];
-  if (token && sessionStore.has(token)) {
+  const db = readDb();
+  if (token && db.sessions.includes(token)) {
     next();
   } else {
     res.status(401).json({ error: 'Unauthorized. Silakan login terlebih dahulu.' });
@@ -121,7 +125,8 @@ app.post('/api/auth/login', (req, res) => {
   const db = readDb();
   if (bcrypt.compareSync(password, db.passwordHash)) {
     const token = uuidv4();
-    sessionStore.add(token);
+    db.sessions.push(token);
+    writeDb(db);
     res.cookie(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
@@ -135,7 +140,8 @@ app.post('/api/auth/login', (req, res) => {
 // API: Auth Check
 app.get('/api/auth/check', (req, res) => {
   const token = req.cookies[AUTH_COOKIE_NAME];
-  if (token && sessionStore.has(token)) {
+  const db = readDb();
+  if (token && db.sessions.includes(token)) {
     res.json({ authenticated: true });
   } else {
     res.json({ authenticated: false });
@@ -146,7 +152,9 @@ app.get('/api/auth/check', (req, res) => {
 app.post('/api/auth/logout', (req, res) => {
   const token = req.cookies[AUTH_COOKIE_NAME];
   if (token) {
-    sessionStore.delete(token);
+    const db = readDb();
+    db.sessions = db.sessions.filter(session => session !== token);
+    writeDb(db);
   }
   res.clearCookie(AUTH_COOKIE_NAME);
   res.json({ success: true });
@@ -288,6 +296,7 @@ app.post('/api/files/note', requireAuth, (req, res) => {
 app.post('/api/files/upload', requireAuth, upload.array('files'), (req, res) => {
   const parentId = req.body.parentId || null;
   const tempMode = req.body.tempMode; // duration in minutes: 3, 5, 30, 60
+  const conflictMode = req.body.conflictMode || 'ask';
   
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'Tidak ada file yang diupload.' });
@@ -296,24 +305,57 @@ app.post('/api/files/upload', requireAuth, upload.array('files'), (req, res) => 
   const db = readDb();
   const uploadedFiles = [];
   const relativePath = req.body.relativePath || null;
+  const targetParentId = parentId === 'null' ? null : (parentId || null);
 
   let expiryTime = null;
   if (tempMode && tempMode !== 'permanent') {
-    const minutes = parseInt(tempMode);
+    const minutes = parseInt(tempMode, 10);
     if (!isNaN(minutes)) {
       expiryTime = new Date(Date.now() + minutes * 60 * 1000).toISOString();
     }
   }
 
+  const buildUniqueName = (name, parentFolderId) => {
+    const ext = path.extname(name);
+    const baseName = path.basename(name, ext);
+    let finalName = name;
+    let counter = 1;
+
+    while (db.files.some(f => !f.isDeleted && !f.isFolder && f.parentId === parentFolderId && f.name === finalName)) {
+      finalName = `${baseName} (${counter})${ext}`;
+      counter += 1;
+    }
+
+    return finalName;
+  };
+
   req.files.forEach(file => {
+    const existingSameName = db.files.find(f => !f.isDeleted && !f.isFolder && f.parentId === targetParentId && f.name === file.originalname);
+
+    if (existingSameName && conflictMode === 'replace') {
+      deleteItem(db, existingSameName.id);
+    }
+
+    if (existingSameName && conflictMode === 'ask') {
+      return res.status(409).json({
+        error: `File "${file.originalname}" sudah ada di folder ini.`,
+        conflict: true,
+        filename: file.originalname
+      });
+    }
+
+    const finalName = (existingSameName && conflictMode === 'rename')
+      ? buildUniqueName(file.originalname, targetParentId)
+      : file.originalname;
+
     const newFile = {
       id: path.basename(file.filename, path.extname(file.filename)),
-      name: file.originalname,
+      name: finalName,
       type: file.mimetype,
       size: file.size,
       storagePath: file.filename,
       originalRelativePath: relativePath && relativePath !== file.originalname ? relativePath : null,
-      parentId: parentId === 'null' ? null : (parentId || null),
+      parentId: targetParentId,
       createdAt: new Date().toISOString(),
       isFolder: false,
       temporary: expiryTime !== null,

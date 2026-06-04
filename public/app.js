@@ -950,36 +950,43 @@ function openMediaPreview(item) {
   const type = (item.type || '').toLowerCase();
   const ext = item.name.toLowerCase().split('.').pop();
 
-  if (type.startsWith('image/')) {
+  console.log('[Preview] item:', item.name, '| type:', type, '| ext:', ext);
+  console.log('[Preview] previewUrl (relative):', previewUrl);
+  console.log('[Preview] previewUrl (absolute):', `${window.location.origin}${previewUrl}`);
+
+  // If Office file, use Office Live Viewer
+  if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+    // Office Live Viewer requires a publicly accessible absolute URL
+    const absoluteFileUrl = `${window.location.origin}${previewUrl}`;
+    const officeLiveViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(absoluteFileUrl)}`;
+    console.log('[Preview] Office Live URL:', officeLiveViewerUrl);
+    previewIframeElement.src = officeLiveViewerUrl;
+    previewIframeElement.classList.remove('hidden');
+  }
+  // If PDF or other document types that can be iframed directly
+  else if (type.includes('pdf') || ext === 'pdf') {
+    previewIframeElement.src = previewUrl;
+    previewIframeElement.classList.remove('hidden');
+  }
+  // If Image or Video, use respective elements
+  else if (type.startsWith('image/')) {
     previewImgElement.src = previewUrl;
     previewImgElement.classList.remove('hidden');
-  } 
+  }
   else if (type.startsWith('video/')) {
     previewVideoElement.src = previewUrl;
     previewVideoElement.classList.remove('hidden');
     previewVideoElement.load();
-  } 
-  else if (type.includes('pdf') || ext === 'pdf') {
-    previewIframeElement.src = previewUrl;
-    previewIframeElement.classList.remove('hidden');
-  } 
-  else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
-    const absolutePreviewUrl = `${window.location.origin}${previewUrl}`;
-    const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(absolutePreviewUrl)}`;
-    previewIframeElement.src = officeViewerUrl;
-    previewIframeElement.classList.remove('hidden');
   }
   else {
-    if (type === 'text/plain') {
-      openTextNoteEditor(item);
-      return;
-    } else {
-      downloadFile(item.id);
-      return;
-    }
+    // Fallback for unknown types: attempt direct iframe or provide download link
+    previewIframeElement.src = previewUrl; 
+    previewIframeElement.classList.remove('hidden');
   }
-
-  btnDownloadPreviewImg.onclick = () => downloadFile(item.id);
+  
+  // Set download attributes for the button
+  btnDownloadPreviewImg.setAttribute('download', item.name);
+  btnDownloadPreviewImg.href = previewUrl;
 
   openModal(modalImagePreview);
 }
@@ -1038,10 +1045,10 @@ function openOptionsSheet(item) {
   sheetName.textContent = item.name;
   sheetIcon.className = getFileIconClass(item);
 
-  // Populate Info Panel
   const typeEl = document.getElementById('sheet-info-type');
   const sizeEl = document.getElementById('sheet-info-size');
   const pathEl = document.getElementById('sheet-info-path');
+  const uploadTimeEl = document.getElementById('sheet-info-upload-time');
   const sizeRow = document.getElementById('sheet-info-size-row');
   
   const extMatch = item.name.match(/\.([^.]+)$/);
@@ -1055,6 +1062,7 @@ function openOptionsSheet(item) {
     sizeEl.textContent = formatBytes(item.size);
   }
 
+  uploadTimeEl.textContent = item.createdAt ? new Date(item.createdAt).toLocaleString('id-ID') : '-';
   pathEl.textContent = currentPath.map(p => p.name).join(' / ');
   
   // Pinned action label
@@ -1532,6 +1540,64 @@ fileInput.addEventListener('change', (e) => {
   stageUploadFiles(Array.from(e.target.files), 'flat');
 });
 
+/* ==================== GLOBAL DRAG & DROP ==================== */
+const globalDragOverlay = document.getElementById('global-drag-overlay');
+let dragCounter = 0;
+
+window.addEventListener('dragenter', (e) => {
+  e.preventDefault();
+  if (e.dataTransfer.types.includes('Files')) {
+    dragCounter++;
+    globalDragOverlay.classList.remove('hidden');
+    globalDragOverlay.classList.add('drag-active');
+  }
+});
+
+window.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  if (e.dataTransfer.types.includes('Files')) {
+    e.dataTransfer.dropEffect = 'copy';
+  }
+});
+
+window.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  if (e.dataTransfer.types.includes('Files')) {
+    dragCounter--;
+    if (dragCounter === 0) {
+      globalDragOverlay.classList.remove('drag-active');
+      globalDragOverlay.classList.add('hidden');
+    }
+  }
+});
+
+window.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragCounter = 0;
+  globalDragOverlay.classList.remove('drag-active');
+  globalDragOverlay.classList.add('hidden');
+
+  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    const dt = e.dataTransfer;
+    // Reset upload state
+    pendingUploadFiles = [];
+    pendingFolderLabel = '';
+    pendingFolderMode = 'preserve';
+    uploadQueue.classList.add('hidden');
+    folderSummary.classList.add('hidden');
+    folderSummaryList.innerHTML = '';
+    folderUploadMode.classList.add('hidden');
+    queueItems.innerHTML = '';
+    fileInput.value = '';
+    folderInput.value = '';
+    btnStartUpload.disabled = false;
+    btnStartUpload.textContent = 'Upload';
+    
+    openModal(modalUpload);
+    stageUploadFiles(Array.from(dt.files), 'flat');
+  }
+});
+
 btnPickFolder.addEventListener('click', async () => {
   try {
     if (window.showDirectoryPicker) {
@@ -1678,7 +1744,7 @@ function handleFilesUpload() {
   });
 }
 
-function uploadSingleFile(file, tempMode, onSuccess, onDone) {
+function uploadSingleFile(file, tempMode, onSuccess, onDone, conflictMode = 'ask') {
   // Create UI indicator in upload modal queue list
   const queueId = 'q-' + Math.random().toString(36).substring(2, 9);
   const itemEl = document.createElement('div');
@@ -1695,56 +1761,67 @@ function uploadSingleFile(file, tempMode, onSuccess, onDone) {
   `;
   queueItems.appendChild(itemEl);
 
-  // Send request via XMLHttpRequest to capture live upload progress percentage
-  const xhr = new XMLHttpRequest();
-  const formData = new FormData();
-  
-  formData.append('files', file);
-  formData.append('parentId', currentFolderId || 'null');
-  formData.append('tempMode', tempMode);
-  if (pendingFolderMode === 'preserve') {
-    formData.append('relativePath', file.webkitRelativePath || file.name);
-  }
+  const sendUpload = (mode) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
 
-  xhr.upload.addEventListener('progress', (e) => {
-    if (e.lengthComputable) {
-      const percent = Math.round((e.loaded / e.total) * 100);
-      document.getElementById(`progress-${queueId}`).style.width = percent + '%';
-      document.getElementById(`status-${queueId}`).textContent = percent + '%';
+    formData.append('files', file);
+    formData.append('parentId', currentFolderId || 'null');
+    formData.append('tempMode', tempMode);
+    formData.append('conflictMode', mode);
+    if (pendingFolderMode === 'preserve') {
+      formData.append('relativePath', file.webkitRelativePath || file.name);
     }
-  });
 
-  xhr.addEventListener('load', () => {
-    const fill = document.getElementById(`progress-${queueId}`);
-    const statusText = document.getElementById(`status-${queueId}`);
-    
-    if (xhr.status >= 200 && xhr.status < 300) {
-      fill.classList.add('success');
-      statusText.textContent = 'Berhasil';
-      statusText.style.color = 'var(--success)';
-      loadFiles();
-      if (typeof onSuccess === 'function') onSuccess();
-    } else {
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        document.getElementById(`progress-${queueId}`).style.width = percent + '%';
+        document.getElementById(`status-${queueId}`).textContent = percent + '%';
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      const fill = document.getElementById(`progress-${queueId}`);
+      const statusText = document.getElementById(`status-${queueId}`);
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        fill.classList.add('success');
+        statusText.textContent = 'Berhasil';
+        statusText.style.color = 'var(--success)';
+        loadFiles();
+        if (typeof onSuccess === 'function') onSuccess();
+      } else if (xhr.status === 409 && mode === 'ask') {
+        fill.classList.add('error');
+        statusText.textContent = 'Konflik';
+        statusText.style.color = 'var(--warning, #f59e0b)';
+        const useReplace = confirm(`File "${file.name}" sudah ada di folder ini.\nOK = Replace\nCancel = Buat nama lain otomatis`);
+        sendUpload(useReplace ? 'replace' : 'rename');
+        return;
+      } else {
+        fill.classList.add('error');
+        statusText.textContent = 'Gagal';
+        statusText.style.color = 'var(--danger)';
+        showToast(`Upload gagal: ${file.name}`, 'error');
+      }
+      if (typeof onDone === 'function') onDone();
+    });
+
+    xhr.addEventListener('error', () => {
+      const fill = document.getElementById(`progress-${queueId}`);
+      const statusText = document.getElementById(`status-${queueId}`);
       fill.classList.add('error');
-      statusText.textContent = 'Gagal';
+      statusText.textContent = 'Error';
       statusText.style.color = 'var(--danger)';
-      showToast(`Upload gagal: ${file.name}`, 'error');
-    }
-    if (typeof onDone === 'function') onDone();
-  });
+      showToast(`Gangguan koneksi: ${file.name}`, 'error');
+      if (typeof onDone === 'function') onDone();
+    });
 
-  xhr.addEventListener('error', () => {
-    const fill = document.getElementById(`progress-${queueId}`);
-    const statusText = document.getElementById(`status-${queueId}`);
-    fill.classList.add('error');
-    statusText.textContent = 'Error';
-    statusText.style.color = 'var(--danger)';
-    showToast(`Gangguan koneksi: ${file.name}`, 'error');
-    if (typeof onDone === 'function') onDone();
-  });
+    xhr.open('POST', `${API_FILES}/upload`);
+    xhr.send(formData);
+  };
 
-  xhr.open('POST', `${API_FILES}/upload`);
-  xhr.send(formData);
+  sendUpload(conflictMode);
 }
 
 // Initial authentication verify on page render

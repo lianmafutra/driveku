@@ -2132,3 +2132,56 @@ body {
     min-height: 82px;
   }
 }
+
+/* ==================== GLOBAL DRAG OVERLAY ==================== */
+.global-drag-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+  border: 4px dashed var(--accent-primary);
+  box-sizing: border-box;
+}
+
+.global-drag-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.drag-overlay-content {
+  text-align: center;
+  color: #fff;
+  transform: scale(1);
+  transition: transform 0.2s ease-out;
+  pointer-events: none;
+}
+
+.drag-overlay-content i {
+  font-size: 80px;
+  color: var(--accent-primary);
+  margin-bottom: 24px;
+}
+
+.drag-overlay-content h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.drag-overlay-content p {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.global-drag-overlay.drag-active .drag-overlay-content {
+  transform: scale(1.05);
+}
