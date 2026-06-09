@@ -511,13 +511,11 @@ body {
 }
 
 /* ==================== HIDE STATES (applied to body) ==================== */
-body.hide-date .file-info-row span:last-child,
-body.hide-date .file-info-row .file-date {
+body.hide-date .file-date {
   display: none;
 }
 
-body.hide-size .file-info-row span:first-child,
-body.hide-size .file-info-row .file-size {
+body.hide-size .file-size {
   display: none;
 }
 
