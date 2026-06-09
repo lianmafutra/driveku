@@ -932,6 +932,15 @@ function getPreviewUrl(item) {
 /* ==================== PREMIUM DYNAMIC MULTI-MEDIA PREVIEW ==================== */
 function openMediaPreview(item) {
   if (!item) return;
+  const type = (item.type || '').toLowerCase();
+  const ext = item.name.toLowerCase().split('.').pop();
+
+  // Text files → open editable note editor
+  if (ext === 'txt' || type === 'text/plain' || type.startsWith('text/')) {
+    openTextNoteEditor(item);
+    return;
+  }
+
   previewImageTitle.textContent = item.name;
   previewImageSize.textContent = `Ukuran File: ${formatBytes(item.size)}`;
   
@@ -947,8 +956,6 @@ function openMediaPreview(item) {
   previewIframeElement.removeAttribute('src');
 
   const previewUrl = getPreviewUrl(item);
-  const type = (item.type || '').toLowerCase();
-  const ext = item.name.toLowerCase().split('.').pop();
 
   console.log('[Preview] item:', item.name, '| type:', type, '| ext:', ext);
   console.log('[Preview] previewUrl (relative):', previewUrl);
@@ -1125,7 +1132,14 @@ sheetOptEdit.addEventListener('click', () => {
   if (selectedItem) {
     const item = selectedItem; // Cache copy
     closeOptionsSheet();
-    openRenameModal(item);
+    // Text files → open editable text editor
+    const ext = (item.name || '').toLowerCase().split('.').pop();
+    const type = (item.type || '').toLowerCase();
+    if (!item.isFolder && (ext === 'txt' || type === 'text/plain' || type.startsWith('text/'))) {
+      openTextNoteEditor(item);
+    } else {
+      openRenameModal(item);
+    }
   }
 });
 

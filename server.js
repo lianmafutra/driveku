@@ -553,7 +553,10 @@ app.get('/api/files/:id/view', requireAuth, (req, res) => {
 // API: Read Text Note Content
 app.get('/api/files/:id/content', requireAuth, (req, res) => {
   const db = readDb();
-  const fileInfo = db.files.find(f => f.id === req.params.id && !f.isFolder && !f.isDeleted && f.type === 'text/plain');
+  const fileInfo = db.files.find(f =>
+    f.id === req.params.id && !f.isFolder && !f.isDeleted &&
+    (f.type === 'text/plain' || (f.name || '').toLowerCase().endsWith('.txt'))
+  );
   if (!fileInfo) {
     return res.status(404).json({ error: 'File catatan tidak ditemukan.' });
   }
@@ -571,7 +574,10 @@ app.get('/api/files/:id/content', requireAuth, (req, res) => {
 app.put('/api/files/:id/content', requireAuth, (req, res) => {
   const { content } = req.body;
   const db = readDb();
-  const fileInfo = db.files.find(f => f.id === req.params.id && !f.isFolder && !f.isDeleted && f.type === 'text/plain');
+  const fileInfo = db.files.find(f =>
+    f.id === req.params.id && !f.isFolder && !f.isDeleted &&
+    (f.type === 'text/plain' || (f.name || '').toLowerCase().endsWith('.txt'))
+  );
   if (!fileInfo) {
     return res.status(404).json({ error: 'File catatan tidak ditemukan.' });
   }

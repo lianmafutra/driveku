@@ -389,6 +389,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
+  contain: layout style;
 }
 
 .files-grid.grid-cols-7 {
@@ -417,13 +418,17 @@ body {
   flex-direction: column;
   position: relative;
   cursor: pointer;
-  transition: var(--transition-smooth);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  contain: layout style;
 }
 .file-card:hover {
   transform: translateY(-2px);
   border-color: var(--accent-primary);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  will-change: transform;
 }
 
 .file-card.selectable {
@@ -724,11 +729,11 @@ body {
   width: 38px;
   height: 38px;
   font-size: 17px;
-  background: rgba(11, 15, 25, 0.78);
+  background: rgba(11, 15, 25, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  /* backdrop-filter removed — too expensive per-card */
   opacity: 0;
-  transition: var(--transition-smooth);
+  transition: opacity 0.2s ease;
   z-index: 12;
 }
 .file-card:hover .file-menu-btn,
@@ -787,6 +792,7 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .thumbnail-symbol {
@@ -1826,11 +1832,11 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: var(--transition-smooth);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .file-card:hover .thumbnail-img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .pinned-badge {
@@ -1881,11 +1887,11 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: var(--transition-smooth);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .file-card:hover .thumbnail-img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .pinned-badge {
