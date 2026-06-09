@@ -75,6 +75,9 @@ const btnNoteView = document.getElementById('btn-note-view');
 const btnNoteEdit = document.getElementById('btn-note-edit');
 const btnSaveNote = document.getElementById('btn-save-note');
 const noteModalTitle = document.getElementById('note-modal-title');
+const csvToolbar = document.getElementById('csv-toolbar');
+const csvSeparator = document.getElementById('csv-separator');
+const csvCustomSeparator = document.getElementById('csv-custom-separator');
 
 const shareForm = document.getElementById('share-form');
 const shareFileId = document.getElementById('share-file-id');
@@ -1265,6 +1268,77 @@ function renderMarkdownPreview(content) {
   return paragraphs || '<p></p>';
 }
 
+function parseCsvLine(text, separator) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (inQuotes) {
+      if (char === '"' && text[i + 1] === '"') {
+        current += '"'; i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        current += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (text.substr(i, separator.length) === separator) {
+        result.push(current);
+        current = '';
+        i += separator.length - 1;
+      } else {
+        current += char;
+      }
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function renderCsvTable(content, separator) {
+  if (!content) return '';
+  const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
+  if (lines.length === 0) return '';
+  let html = '<div style="overflow-x: auto; max-width: 100%;"><table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; text-align: left;">';
+  lines.forEach((line, index) => {
+    const cols = parseCsvLine(line, separator);
+    html += '<tr style="border-bottom: 1px solid var(--border-color);">';
+    cols.forEach(col => {
+      if (index === 0) {
+        html += `<th style="padding: 10px; background: rgba(255,255,255,0.05); color: var(--text-main); font-weight: 600;">${escapeHtml(col)}</th>`;
+      } else {
+        html += `<td style="padding: 8px 10px; color: var(--text-muted);">${escapeHtml(col)}</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</table></div>';
+  return html;
+}
+
+function updatePreviewContent() {
+  if (csvToolbar && !csvToolbar.classList.contains('hidden')) {
+    let sep = csvSeparator.value;
+    if (sep === 'custom') sep = csvCustomSeparator.value || ',';
+    notePreview.innerHTML = renderCsvTable(noteContentInput.value, sep);
+  } else {
+    notePreview.innerHTML = renderMarkdownPreview(noteContentInput.value);
+  }
+}
+
+if (csvSeparator) {
+  csvSeparator.addEventListener('change', () => {
+    csvCustomSeparator.classList.toggle('hidden', csvSeparator.value !== 'custom');
+    if (noteMode === 'preview') updatePreviewContent();
+  });
+  csvCustomSeparator.addEventListener('input', () => {
+    if (noteMode === 'preview') updatePreviewContent();
+  });
+}
+
 function setNoteMode(mode) {
   noteMode = mode;
   const isPreview = mode === 'preview';
@@ -1273,7 +1347,7 @@ function setNoteMode(mode) {
   noteContentInput.classList.toggle('hidden', isPreview);
   notePreview.classList.toggle('hidden', !isPreview);
   if (isPreview) {
-    notePreview.innerHTML = renderMarkdownPreview(noteContentInput.value);
+    updatePreviewContent();
   }
 }
 
@@ -1285,6 +1359,7 @@ btnNewNote.addEventListener('click', () => {
   noteNameInput.disabled = false;
   noteContentInput.value = '';
   notePreview.innerHTML = '';
+  if (csvToolbar) csvToolbar.classList.add('hidden');
   setNoteMode('edit');
   openModal(modalNote);
 });
@@ -1297,6 +1372,14 @@ async function openTextNoteEditor(file) {
   noteNameInput.disabled = true;
   noteContentInput.value = 'Memuat isi catatan...';
   notePreview.innerHTML = '';
+  
+  const isCsv = file.name.toLowerCase().endsWith('.csv');
+  if (csvToolbar) csvToolbar.classList.toggle('hidden', !isCsv);
+  if (isCsv && csvSeparator) {
+    csvSeparator.value = ',';
+    csvCustomSeparator.classList.add('hidden');
+  }
+
   setNoteMode('preview');
 
   openModal(modalNote);
@@ -1306,7 +1389,7 @@ async function openTextNoteEditor(file) {
     const data = await res.json();
     if (res.ok) {
       noteContentInput.value = data.content;
-      notePreview.innerHTML = renderMarkdownPreview(data.content);
+      updatePreviewContent();
     } else {
       showToast('Gagal memuat isi catatan', 'error');
       closeAllModals();
@@ -1322,7 +1405,7 @@ btnNoteEdit.addEventListener('click', () => setNoteMode('edit'));
 
 noteContentInput.addEventListener('input', () => {
   if (noteMode === 'preview') {
-    notePreview.innerHTML = renderMarkdownPreview(noteContentInput.value);
+    updatePreviewContent();
   }
 });
 
@@ -1355,7 +1438,7 @@ noteForm.addEventListener('submit', async (e) => {
       showToast(editingNoteId ? 'Catatan berhasil diperbarui' : 'Catatan berhasil dibuat', 'success');
       loadFiles();
       if (editingNoteId) {
-        notePreview.innerHTML = renderMarkdownPreview(content);
+        updatePreviewContent();
         setNoteMode('preview');
       } else {
         noteForm.reset();

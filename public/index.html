@@ -297,6 +297,17 @@
             <button type="button" id="btn-note-view" class="note-mode-btn active">Preview</button>
             <button type="button" id="btn-note-edit" class="note-mode-btn">Edit</button>
           </div>
+          <div id="csv-toolbar" class="csv-toolbar hidden" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-md);">
+            <label for="csv-separator" style="font-size: 13px; font-weight: 500;"><i class="fa-solid fa-table"></i> Pemisah Kolom:</label>
+            <select id="csv-separator" class="form-control-sm" style="width: auto;">
+              <option value=",">Koma (,)</option>
+              <option value=";">Titik Koma (;)</option>
+              <option value="\t">Tab</option>
+              <option value="|">Pipa (|)</option>
+              <option value="custom">Kustom...</option>
+            </select>
+            <input type="text" id="csv-custom-separator" class="form-control-sm hidden" maxlength="3" style="width: 50px; text-align: center;" placeholder=",">
+          </div>
           <div class="form-group">
             <label for="note-name">Nama File Catatan</label>
             <input type="text" id="note-name" class="form-control" placeholder="nama-catatan (otomatis .txt)" required>
