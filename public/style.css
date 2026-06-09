@@ -379,6 +379,160 @@ body {
   gap: 10px;
 }
 
+/* ==================== STYLE SETTINGS DROPDOWN ==================== */
+.style-settings-wrap {
+  position: relative;
+}
+
+.style-settings-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 280px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  padding: 6px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: top right;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.style-settings-panel.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.style-settings-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 8px 12px 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.style-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.style-toggle-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.style-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.style-toggle-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.style-toggle-label i {
+  color: var(--accent-primary);
+  width: 14px;
+  text-align: center;
+}
+
+.style-toggle-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Toggle Switch */
+.style-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.style-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.style-switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.style-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease;
+}
+
+.style-switch input:checked + .style-switch-track {
+  background: linear-gradient(135deg, var(--accent-primary), #1d4ed8);
+  border-color: var(--accent-primary);
+}
+
+.style-switch input:checked + .style-switch-track::after {
+  transform: translateX(18px);
+  background: #fff;
+}
+
+/* ==================== HIDE STATES (applied to body) ==================== */
+body.hide-date .file-info-row span:last-child,
+body.hide-date .file-info-row .file-date {
+  display: none;
+}
+
+body.hide-size .file-info-row span:first-child,
+body.hide-size .file-info-row .file-size {
+  display: none;
+}
+
+/* Hide entire info row if both hidden */
+body.hide-date.hide-size .file-info-row {
+  display: none;
+}
+
+/* Active state for settings button */
+#btn-style-settings.active {
+  color: var(--accent-primary);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+
 /* File Grid list */
 .content-view {
   flex: 1;
