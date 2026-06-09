@@ -527,8 +527,8 @@ function renderFiles(files) {
         <div class="file-card-footer-row">
           ${item.isShared ? `<div class="share-status-chip"><i class="fa-solid fa-share-nodes"></i> Dibagikan</div>` : ''}
           <div class="file-info-row">
-            <span>${item.isFolder ? 'Folder' : formatBytes(item.size)}</span>
-            <span>${new Date(item.createdAt).toLocaleDateString('id-ID')}</span>
+            <span class="file-size">${item.isFolder ? 'Folder' : formatBytes(item.size)}</span>
+            <span class="file-date">${new Date(item.createdAt).toLocaleDateString('id-ID')}</span>
           </div>
         </div>
         ${expiryBadgeHtml}
@@ -1841,3 +1841,58 @@ function uploadSingleFile(file, tempMode, onSuccess, onDone, conflictMode = 'ask
 // Initial authentication verify on page render
 checkAuth();
 updateBreadcrumbs();
+
+/* ==================== STYLE SETTINGS PANEL ==================== */
+(function initStyleSettings() {
+  const btnStyleSettings = document.getElementById('btn-style-settings');
+  const stylePanel = document.getElementById('style-settings-panel');
+  const toggleDate = document.getElementById('toggle-show-date');
+  const toggleSize = document.getElementById('toggle-show-size');
+
+  // Load from localStorage
+  const saved = JSON.parse(localStorage.getItem('driveku_style') || '{}');
+  const showDate = saved.showDate !== false; // default true
+  const showSize = saved.showSize !== false; // default true
+
+  toggleDate.checked = showDate;
+  toggleSize.checked = showSize;
+  applyStylePrefs(showDate, showSize);
+
+  function applyStylePrefs(date, size) {
+    document.body.classList.toggle('hide-date', !date);
+    document.body.classList.toggle('hide-size', !size);
+  }
+
+  function saveStylePrefs() {
+    localStorage.setItem('driveku_style', JSON.stringify({
+      showDate: toggleDate.checked,
+      showSize: toggleSize.checked
+    }));
+  }
+
+  // Toggle panel open/close
+  btnStyleSettings.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = stylePanel.classList.toggle('open');
+    btnStyleSettings.classList.toggle('active', isOpen);
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#style-settings-wrap')) {
+      stylePanel.classList.remove('open');
+      btnStyleSettings.classList.remove('active');
+    }
+  });
+
+  // Toggle listeners
+  toggleDate.addEventListener('change', () => {
+    applyStylePrefs(toggleDate.checked, toggleSize.checked);
+    saveStylePrefs();
+  });
+
+  toggleSize.addEventListener('change', () => {
+    applyStylePrefs(toggleDate.checked, toggleSize.checked);
+    saveStylePrefs();
+  });
+})();
