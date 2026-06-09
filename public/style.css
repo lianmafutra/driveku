@@ -1358,6 +1358,7 @@ body.hide-date.hide-size .file-info-row {
   flex: 1;
   display: flex;
   flex-direction: column;
+  max-height: none;
 }
 .modal.fullscreen .note-editor-wrap {
   flex: 1;
@@ -1402,10 +1403,17 @@ body.hide-date.hide-size .file-info-row {
   padding: 16px 24px;
   border-top: 1px solid var(--border-color);
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 12px;
 }
-
+.modal.fullscreen .modal-footer {
+  padding: 10px 24px;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+.modal.fullscreen .modal-header {
+  padding: 12px 24px;
+}
 .form-group {
   margin-bottom: 20px;
 }
