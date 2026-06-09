@@ -1391,7 +1391,7 @@ function setNoteMode(mode) {
 btnNewNote.addEventListener('click', () => {
   editingNoteId = null;
   noteForm.reset();
-  noteModalTitle.textContent = 'Buat Catatan Txt';
+  noteModalTitle.textContent = 'Buat file Teks';
   btnSaveNote.textContent = 'Simpan';
   noteNameInput.disabled = false;
   noteContentInput.value = '';
