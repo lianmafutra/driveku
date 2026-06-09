@@ -570,9 +570,8 @@ app.get('/api/files/:id/content', requireAuth, (req, res) => {
   res.json({ content });
 });
 
-// API: Update Text Note Content
 app.put('/api/files/:id/content', requireAuth, (req, res) => {
-  const { content } = req.body;
+  const { content, name } = req.body;
   const db = readDb();
   const fileInfo = db.files.find(f =>
     f.id === req.params.id && !f.isFolder && !f.isDeleted &&
@@ -580,6 +579,16 @@ app.put('/api/files/:id/content', requireAuth, (req, res) => {
   );
   if (!fileInfo) {
     return res.status(404).json({ error: 'File catatan tidak ditemukan.' });
+  }
+
+  if (name && name.trim() !== '') {
+    let finalName = name.trim();
+    // Maintain extension if applicable
+    const ext = path.extname(fileInfo.name) || (fileInfo.type === 'text/csv' ? '.csv' : '.txt');
+    if (!finalName.toLowerCase().endsWith(ext)) {
+      finalName += ext;
+    }
+    fileInfo.name = finalName;
   }
 
   const filePath = path.join(UPLOADS_DIR, fileInfo.storagePath);

@@ -1382,6 +1382,7 @@ function setNoteMode(mode) {
   btnNoteEdit.classList.toggle('active', !isPreview);
   noteContentInput.classList.toggle('hidden', isPreview);
   notePreview.classList.toggle('hidden', !isPreview);
+  noteNameInput.disabled = isPreview;
   if (isPreview) {
     updatePreviewContent();
   }
@@ -1405,7 +1406,6 @@ async function openTextNoteEditor(file) {
   noteModalTitle.textContent = `Edit Catatan: ${file.name}`;
   btnSaveNote.textContent = 'Perbarui';
   noteNameInput.value = file.name.replace(/\.(txt|csv)$/i, '');
-  noteNameInput.disabled = true;
   noteContentInput.value = 'Memuat isi catatan...';
   notePreview.innerHTML = '';
   
@@ -1456,7 +1456,7 @@ noteForm.addEventListener('submit', async (e) => {
     if (editingNoteId) {
       url = `${API_FILES}/${editingNoteId}/content`;
       method = 'PUT';
-      body = JSON.stringify({ content });
+      body = JSON.stringify({ content, name });
     } else {
       url = `${API_FILES}/note`;
       method = 'POST';
