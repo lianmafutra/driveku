@@ -265,7 +265,7 @@ app.post('/api/files/note', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'Nama file tidak boleh kosong.' });
   }
 
-  const fileName = name.endsWith('.txt') ? name : `${name}.txt`;
+  const fileName = (name.endsWith('.txt') || name.endsWith('.csv')) ? name : `${name}.txt`;
   const fileId = uuidv4();
   const storageName = `${fileId}.txt`;
   const filePath = path.join(UPLOADS_DIR, storageName);
@@ -555,7 +555,7 @@ app.get('/api/files/:id/content', requireAuth, (req, res) => {
   const db = readDb();
   const fileInfo = db.files.find(f =>
     f.id === req.params.id && !f.isFolder && !f.isDeleted &&
-    (f.type === 'text/plain' || (f.name || '').toLowerCase().endsWith('.txt'))
+    (f.type === 'text/plain' || f.type === 'text/csv' || (f.name || '').toLowerCase().endsWith('.txt') || (f.name || '').toLowerCase().endsWith('.csv'))
   );
   if (!fileInfo) {
     return res.status(404).json({ error: 'File catatan tidak ditemukan.' });
@@ -576,7 +576,7 @@ app.put('/api/files/:id/content', requireAuth, (req, res) => {
   const db = readDb();
   const fileInfo = db.files.find(f =>
     f.id === req.params.id && !f.isFolder && !f.isDeleted &&
-    (f.type === 'text/plain' || (f.name || '').toLowerCase().endsWith('.txt'))
+    (f.type === 'text/plain' || f.type === 'text/csv' || (f.name || '').toLowerCase().endsWith('.txt') || (f.name || '').toLowerCase().endsWith('.csv'))
   );
   if (!fileInfo) {
     return res.status(404).json({ error: 'File catatan tidak ditemukan.' });

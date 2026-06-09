@@ -936,7 +936,7 @@ function openMediaPreview(item) {
   const ext = item.name.toLowerCase().split('.').pop();
 
   // Text files → open editable note editor
-  if (ext === 'txt' || type === 'text/plain' || type.startsWith('text/')) {
+  if (ext === 'txt' || ext === 'csv' || type === 'text/plain' || type.startsWith('text/')) {
     openTextNoteEditor(item);
     return;
   }
@@ -1135,7 +1135,7 @@ sheetOptEdit.addEventListener('click', () => {
     // Text files → open editable text editor
     const ext = (item.name || '').toLowerCase().split('.').pop();
     const type = (item.type || '').toLowerCase();
-    if (!item.isFolder && (ext === 'txt' || type === 'text/plain' || type.startsWith('text/'))) {
+    if (!item.isFolder && (ext === 'txt' || ext === 'csv' || type === 'text/plain' || type.startsWith('text/'))) {
       openTextNoteEditor(item);
     } else {
       openRenameModal(item);
@@ -1293,7 +1293,7 @@ async function openTextNoteEditor(file) {
   editingNoteId = file.id;
   noteModalTitle.textContent = `Edit Catatan: ${file.name}`;
   btnSaveNote.textContent = 'Perbarui';
-  noteNameInput.value = file.name.replace('.txt', '');
+  noteNameInput.value = file.name.replace(/\.(txt|csv)$/i, '');
   noteNameInput.disabled = true;
   noteContentInput.value = 'Memuat isi catatan...';
   notePreview.innerHTML = '';
