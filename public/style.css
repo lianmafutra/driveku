@@ -390,6 +390,8 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
   contain: layout style;
+  container-type: inline-size;
+  container-name: files-grid;
 }
 
 .files-grid.grid-cols-7 {
@@ -422,7 +424,8 @@ body {
               border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
               box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
-  contain: layout style;
+  container-type: inline-size;
+  container-name: file-card;
 }
 .file-card:hover {
   transform: translateY(-2px);
@@ -430,6 +433,182 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   will-change: transform;
 }
+
+/* ==================== CONTAINER QUERIES — Responsive card scaling ==================== */
+
+/* Medium-small cards (< 250px wide) — e.g. 8-9 columns */
+@container file-card (max-width: 249px) {
+  .thumbnail-container {
+    height: 90px;
+    margin-bottom: 8px;
+  }
+  .thumbnail-symbol {
+    font-size: 34px;
+  }
+  .thumbnail-overlay {
+    font-size: 28px;
+  }
+  .thumbnail-label {
+    font-size: 9px;
+    bottom: 6px;
+    left: 8px;
+  }
+  .file-name {
+    font-size: 12px;
+    margin-bottom: 6px;
+    min-height: calc(1.45em * 2);
+  }
+  .file-info-row {
+    font-size: 10px;
+  }
+  .share-status-chip {
+    font-size: 9px;
+    padding: 4px 7px;
+    gap: 4px;
+  }
+  .file-card-header {
+    min-height: 0;
+  }
+  .file-menu-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+    top: 7px;
+    right: 7px;
+  }
+  .pinned-badge {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+    top: 10px;
+    left: 10px;
+  }
+  .file-expiry-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+  }
+}
+
+/* Small cards (< 200px wide) — e.g. 10 columns */
+@container file-card (max-width: 199px) {
+  .file-card {
+    padding: 10px;
+    border-radius: 8px;
+  }
+  .thumbnail-container {
+    height: 70px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+  }
+  .thumbnail-symbol {
+    font-size: 26px;
+  }
+  .thumbnail-overlay {
+    font-size: 22px;
+  }
+  .thumbnail-label {
+    display: none;
+  }
+  .file-name {
+    font-size: 11px;
+    margin-bottom: 4px;
+    -webkit-line-clamp: 2;
+    min-height: calc(1.45em * 1);
+  }
+  .file-info-row {
+    font-size: 9px;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .share-status-chip {
+    font-size: 8px;
+    padding: 3px 5px;
+    gap: 3px;
+  }
+  .file-menu-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+    top: 5px;
+    right: 5px;
+  }
+  .pinned-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+    top: 8px;
+    left: 8px;
+  }
+  .file-select-badge {
+    width: 20px;
+    height: 20px;
+    top: 8px;
+    left: 8px;
+  }
+  .file-expiry-badge {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  .file-card-footer-row {
+    gap: 3px;
+  }
+}
+
+/* Very small cards (< 155px wide) — e.g. 12+ columns or very narrow viewport */
+@container file-card (max-width: 154px) {
+  .file-card {
+    padding: 7px;
+    border-radius: 6px;
+  }
+  .thumbnail-container {
+    height: 54px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+  }
+  .thumbnail-symbol {
+    font-size: 20px;
+  }
+  .thumbnail-overlay {
+    font-size: 18px;
+  }
+  .file-name {
+    font-size: 10px;
+    margin-bottom: 3px;
+    -webkit-line-clamp: 1;
+    min-height: 0;
+  }
+  .file-info-row {
+    font-size: 8px;
+    flex-direction: column;
+  }
+  .share-status-chip {
+    display: none;
+  }
+  .file-menu-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+    top: 4px;
+    right: 4px;
+  }
+  .pinned-badge {
+    width: 14px;
+    height: 14px;
+    font-size: 7px;
+    top: 6px;
+    left: 6px;
+  }
+  .file-select-badge {
+    width: 18px;
+    height: 18px;
+    top: 6px;
+    left: 6px;
+  }
+  .file-expiry-badge {
+    display: none;
+  }
+}
+
 
 .file-card.selectable {
   border-color: rgba(239, 68, 68, 0.28);
