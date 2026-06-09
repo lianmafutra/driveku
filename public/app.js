@@ -1188,6 +1188,14 @@ function openModal(modal) {
 
 function closeAllModals() {
   document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.modal.fullscreen').forEach(m => m.classList.remove('fullscreen'));
+  // reset media styles back to normal if they were changed
+  const previewMb = document.getElementById('modal-image-preview')?.querySelector('.modal-body');
+  if (previewMb) previewMb.style.maxHeight = '80vh';
+  if (previewImgElement) previewImgElement.style.maxHeight = '70vh';
+  if (previewVideoElement) previewVideoElement.style.maxHeight = '70vh';
+  if (previewIframeElement) previewIframeElement.style.height = '70vh';
+
   // Extra cleanup for media elements to prevent audio/video leaking
   if (previewVideoElement) {
     previewVideoElement.pause();
@@ -1209,6 +1217,34 @@ document.querySelectorAll('.modal').forEach(modal => {
     if (e.target === modal) closeAllModals();
   });
 });
+
+/* Fullscreen Handlers */
+const btnNoteFullscreen = document.getElementById('btn-note-fullscreen');
+if (btnNoteFullscreen) {
+  btnNoteFullscreen.addEventListener('click', () => {
+    document.getElementById('modal-note').classList.toggle('fullscreen');
+  });
+}
+const btnMediaFullscreen = document.getElementById('btn-media-fullscreen');
+if (btnMediaFullscreen) {
+  btnMediaFullscreen.addEventListener('click', () => {
+    document.getElementById('modal-image-preview').classList.toggle('fullscreen');
+    // make sure max-height constraint goes away for preview items when fullscreen
+    if (document.getElementById('modal-image-preview').classList.contains('fullscreen')) {
+      const mb = document.getElementById('modal-image-preview').querySelector('.modal-body');
+      if (mb) mb.style.maxHeight = '100vh';
+      if (previewImgElement) previewImgElement.style.maxHeight = '100vh';
+      if (previewVideoElement) previewVideoElement.style.maxHeight = '100vh';
+      if (previewIframeElement) previewIframeElement.style.height = '100vh';
+    } else {
+      const mb = document.getElementById('modal-image-preview').querySelector('.modal-body');
+      if (mb) mb.style.maxHeight = '80vh';
+      if (previewImgElement) previewImgElement.style.maxHeight = '70vh';
+      if (previewVideoElement) previewVideoElement.style.maxHeight = '70vh';
+      if (previewIframeElement) previewIframeElement.style.height = '70vh';
+    }
+  });
+}
 
 /* ==================== CREATE FOLDER ==================== */
 btnNewFolder.addEventListener('click', () => {
