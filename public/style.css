@@ -660,6 +660,41 @@ body {
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
+.btn-danger:hover {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+
+/* Amber / Warning — tombol Pilih Banyak & Batal Pilih */
+.btn-warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+}
+.btn-warning:hover {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+}
+.btn-warning.active {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.45), 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
+/* Teal / Move — tombol Pindah Terpilih */
+.btn-teal {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+}
+.btn-teal:hover {
+  background: linear-gradient(135deg, #2dd4bf, #14b8a6);
+  box-shadow: 0 4px 14px rgba(20, 184, 166, 0.4);
+  transform: translateY(-1px);
+}
+
 
 .bulk-move-layout {
   display: block;

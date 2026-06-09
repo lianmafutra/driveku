@@ -116,7 +116,38 @@
           <button id="btn-layout-toggle" class="btn-icon-sm" title="Ubah Tampilan Grid/List">
             <i class="fa-solid fa-list"></i>
           </button>
-          
+
+          <!-- Style Settings -->
+          <div class="style-settings-wrap" id="style-settings-wrap">
+            <button id="btn-style-settings" class="btn-icon-sm" title="Pengaturan Tampilan Item">
+              <i class="fa-solid fa-sliders"></i>
+            </button>
+            <div class="style-settings-panel" id="style-settings-panel">
+              <div class="style-settings-header">
+                <i class="fa-solid fa-palette"></i> Tampilan Item
+              </div>
+              <div class="style-toggle-row">
+                <div class="style-toggle-info">
+                  <span class="style-toggle-label"><i class="fa-regular fa-calendar"></i> Tampilkan Tanggal</span>
+                  <span class="style-toggle-desc">Tanggal upload file</span>
+                </div>
+                <label class="style-switch">
+                  <input type="checkbox" id="toggle-show-date" checked>
+                  <span class="style-switch-track"></span>
+                </label>
+              </div>
+              <div class="style-toggle-row">
+                <div class="style-toggle-info">
+                  <span class="style-toggle-label"><i class="fa-solid fa-weight-hanging"></i> Tampilkan Ukuran</span>
+                  <span class="style-toggle-desc">Ukuran file dalam KB/MB</span>
+                </div>
+                <label class="style-switch">
+                  <input type="checkbox" id="toggle-show-size" checked>
+                  <span class="style-switch-track"></span>
+                </label>
+              </div>
+            </div>
+          </div>
           <div class="actions">
             <button id="btn-new-folder" class="btn btn-secondary">
               <i class="fa-solid fa-folder-plus"></i> <span>Folder Baru</span>
